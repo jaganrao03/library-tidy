@@ -7,7 +7,7 @@ name = "library-tidy"
 version = "0.1.0"
 description = "Turn a drive of accumulated files into a dated, navigable library (DATE - PARTY - TYPE - TOPIC)"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "jaganrao03" }]
 keywords = ["files", "rename", "organize", "library", "dedupe", "exif", "webdav"]
