@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Optional
 
 # DATE forms we accept at the front of a name.
 DATE_FORMS = (
@@ -26,7 +25,7 @@ RESERVED_WINDOWS = {
 }
 
 
-def stamp_for(dt: Optional[datetime], with_time: bool | None = None) -> str:
+def stamp_for(dt: datetime | None, with_time: bool | None = None) -> str:
     """Render a datetime as a sortable date prefix. `None` means Undated."""
     if dt is None:
         return "Undated"
@@ -48,7 +47,7 @@ def slug(text: str, limit: int = 60) -> str:
     return text or "Untitled"
 
 
-def build_name(date: Optional[datetime], party: str, kind: str,
+def build_name(date: datetime | None, party: str, kind: str,
                topic: str = "", ext: str = "", with_time: bool | None = None) -> str:
     """Compose `DATE - PARTY - KIND - TOPIC.ext`, dropping empty segments."""
     parts = [stamp_for(date, with_time), slug(party, 30), slug(kind, 30)]
@@ -58,7 +57,7 @@ def build_name(date: Optional[datetime], party: str, kind: str,
     return f"{name}{ext.lower()}" if ext else name
 
 
-def parse_stamp(name: str) -> Optional[datetime]:
+def parse_stamp(name: str) -> datetime | None:
     """Read the date back out of a compliant name (best effort, no time)."""
     m = re.match(r"^(\d{4})-(\d{2})-(\d{2})(?: \d{2}\.\d{2}\.\d{2})?", name)
     if m:

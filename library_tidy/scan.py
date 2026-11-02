@@ -6,11 +6,11 @@ import hashlib
 import json
 import re
 import subprocess
-from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from collections import defaultdict
+from collections.abc import Iterable, Iterator
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
 
 # Date shapes seen in the wild: camera counters, download bots, editors, browsers.
 NAME_PATTERNS = (
@@ -81,7 +81,7 @@ def walk(root: Path, include_dirs: bool = False) -> Iterator[Entry]:
         yield Entry(p, p.relative_to(root).as_posix(), st.st_size, st.st_mtime)
 
 
-def date_from_name(name: str) -> Optional[datetime]:
+def date_from_name(name: str) -> datetime | None:
     for rx, groups in NAME_PATTERNS:
         m = rx.search(name)
         if not m:
@@ -102,7 +102,7 @@ def date_from_name(name: str) -> Optional[datetime]:
     return None
 
 
-def date_from_exif(path: Path) -> Optional[datetime]:
+def date_from_exif(path: Path) -> datetime | None:
     try:
         from PIL import Image
     except ImportError:
@@ -123,7 +123,7 @@ def date_from_exif(path: Path) -> Optional[datetime]:
     return None
 
 
-def date_from_media(path: Path, timeout: int = 20) -> Optional[datetime]:
+def date_from_media(path: Path, timeout: int = 20) -> datetime | None:
     """creation_time from the container — the only honest source for a video
     whose filename carries no timestamp."""
     try:
@@ -141,7 +141,7 @@ def date_from_media(path: Path, timeout: int = 20) -> Optional[datetime]:
         return None
 
 
-def best_date(path: Path, allow_media: bool = True) -> tuple[Optional[datetime], str]:
+def best_date(path: Path, allow_media: bool = True) -> tuple[datetime | None, str]:
     """Filename first (it is what the owner already saw), then embedded
     metadata, then filesystem mtime. Returns (date, source)."""
     d = date_from_name(path.name)
@@ -167,7 +167,7 @@ def head_bytes(path: Path, n: int = 16) -> bytes:
         return b""
 
 
-def magic_matches(path: Path) -> Optional[bool]:
+def magic_matches(path: Path) -> bool | None:
     """True/False when we recognise the signature, None when we cannot judge."""
     head = head_bytes(path)
     if not head:
@@ -195,7 +195,7 @@ MEDIA_LIKE = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".avif",
               ".mp4", ".mov", ".m4v", ".mkv", ".webm", ".m4a"}
 
 
-def detect_type(path: Path) -> Optional[str]:
+def detect_type(path: Path) -> str | None:
     """Return the container type the first bytes prove, or None."""
     head = head_bytes(path, 32)
     if not head:
@@ -238,7 +238,7 @@ def detect_type(path: Path) -> Optional[str]:
     return None
 
 
-def true_extension(path: Path) -> Optional[str]:
+def true_extension(path: Path) -> str | None:
     kind = detect_type(path)
     if kind is None or kind in ("gzip", "ole"):
         return None
@@ -347,8 +347,8 @@ def summary_lines(report: dict) -> list[str]:
     lines = [
         f"{report['files']} files · {report['dirs']} dirs · {mb:.2f} GB",
         f"naming: {report['naming']['non_compliant']} files off-convention",
-        f"integrity: {report['integrity']['zero_bytes']} empty, "
-        f"{report['integrity']['extension_mismatch']} extension/content mismatches",
+        (f"integrity: {report['integrity']['zero_bytes']} empty, "
+         f"{report['integrity']['extension_mismatch']} extension/content mismatches"),
     ]
     if "duplicates" in report:
         d = report["duplicates"]

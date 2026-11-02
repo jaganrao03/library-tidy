@@ -11,13 +11,13 @@ Two rules are baked in because ignoring them is how batch renamers destroy data:
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Iterable, Optional
 
 from . import scan
-from .convention import build_name, slug
+from .convention import build_name
 
 VIDEO_EXT = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".wmv", ".mpg", ".mpeg"}
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".tif", ".tiff"}
@@ -78,7 +78,7 @@ def _claim(target: Path, src: Path, claimed: set[Path]) -> Path:
     return base
 
 
-def build_plan(root: Path, namer: Callable[[scan.Entry, Path], Optional[str]],
+def build_plan(root: Path, namer: Callable[[scan.Entry, Path], str | None],
                select: Callable[[scan.Entry], bool] = lambda e: True,
                skip_dirs: Iterable[str] = ()) -> Plan:
     """Walk the tree, let `namer` propose a new filename, plan it collision-safely."""
@@ -106,7 +106,7 @@ def build_plan(root: Path, namer: Callable[[scan.Entry, Path], Optional[str]],
 # --------------------------------------------------------------------------- namers
 
 def photo_namer(device: str = "Camera", fallback_party: str = "") -> Callable:
-    def namer(entry: scan.Entry, root: Path) -> Optional[str]:
+    def namer(entry: scan.Entry, root: Path) -> str | None:
         p = entry.path
         if p.suffix.lower() not in IMAGE_EXT:
             return None
@@ -125,7 +125,7 @@ def photo_namer(device: str = "Camera", fallback_party: str = "") -> Callable:
 
 
 def video_namer(source_hint: str = "") -> Callable:
-    def namer(entry: scan.Entry, root: Path) -> Optional[str]:
+    def namer(entry: scan.Entry, root: Path) -> str | None:
         p = entry.path
         if p.suffix.lower() not in VIDEO_EXT:
             return None
@@ -142,7 +142,7 @@ def video_namer(source_hint: str = "") -> Callable:
 
 
 def document_namer(party: str = "Me") -> Callable:
-    def namer(entry: scan.Entry, root: Path) -> Optional[str]:
+    def namer(entry: scan.Entry, root: Path) -> str | None:
         p = entry.path
         typ = DOC_TYPES.get(p.suffix.lower())
         if not typ:
@@ -280,7 +280,7 @@ def dedupe_plan(root: Path, groups: list[dict]) -> Plan:
     claimed: set[Path] = set()
     qdir = root / "_Duplicates"
     for g in groups:
-        keep = sorted(g["paths"], key=lambda r: (len(r), r))[0]
+        keep = min(g["paths"], key=lambda r: (len(r), r))
         for rel in g["paths"]:
             if rel == keep:
                 continue
