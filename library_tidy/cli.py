@@ -94,10 +94,7 @@ def cmd_undo(args) -> int:
 def cmd_dedupe(args) -> int:
     root = _check_root(Path(args.root))
     skip = set(args.skip_dir or scan.DEFAULT_SKIP_DIRS) | {"_Duplicates", "_Library Metadata"}
-    entries = [
-        e for e in scan.walk(root)
-        if not (set(e.rel.split("/")[:-1]) & skip) and not e.path.name.startswith(".")
-    ]
+    entries = [e for e in scan.walk(root) if not scan.is_ignored(e.rel, skip)]
     groups = scan.duplicates(entries, min_size=max(args.min_size, 1))
     if not groups:
         print("no duplicates")

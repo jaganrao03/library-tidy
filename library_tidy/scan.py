@@ -47,6 +47,16 @@ DEFAULT_SKIP_DIRS = {"_Library Metadata", "_Duplicates", "Music and Audio",
                      "Lightroom", "venv", ".venv", "__pycache__"}
 
 # Extensions that are config, code or vendor artefacts — never date-prefixed.
+def is_ignored(rel: str, skip) -> bool:
+    """True if any path segment is a skip dir or dot-prefixed.
+
+    Dot *directories* count, not just dot files: a duplicate inside .git or a
+    thumbnail cache is not something to quarantine.
+    """
+    parts = rel.split("/")
+    return bool(set(parts[:-1]) & set(skip)) or any(p.startswith(".") for p in parts)
+
+
 DEFAULT_SKIP_EXT = {".py", ".ipynb", ".js", ".ts", ".sql", ".json", ".mwb",
                     ".lrcat", ".kdbx", ".bat", ".ps1", ".sst", ".db", ".ico",
                     ".dll", ".exe", ".lock", ".css", ".html", ".sln", ".csproj",
@@ -288,7 +298,7 @@ def audit(root: Path, exempt_dirs: set[str] | None = None,
     entries = list(walk(root, include_dirs=True))
     files = [e for e in entries if not e.is_dir]
     dirs = [e for e in entries if e.is_dir]
-    managed = [e for e in files if not (set(e.rel.split("/")[:-1]) & exempt_dirs)]
+    managed = [e for e in files if not is_ignored(e.rel, exempt_dirs)]
 
     by_area: dict[str, dict] = defaultdict(lambda: {"files": 0, "bytes": 0})
     for e in files:

@@ -118,6 +118,26 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(report["integrity"]["extension_mismatch"], 1)
 
 
+class IgnoreRuleTests(unittest.TestCase):
+    def test_dot_directories_and_skip_dirs_are_ignored(self):
+        skip = scan.DEFAULT_SKIP_DIRS
+        self.assertTrue(scan.is_ignored(".git/objects/a", skip))
+        self.assertTrue(scan.is_ignored("Docs/.thumbs/a.jpg", skip))
+        self.assertTrue(scan.is_ignored("_Library Metadata/j.jsonl", skip))
+        self.assertFalse(scan.is_ignored("Docs/a.pdf", skip))
+        self.assertFalse(scan.is_ignored("_redirects", skip))
+
+    def test_duplicate_inside_dot_dir_is_not_a_duplicate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for d in ("Docs", ".hidden"):
+                (root / d).mkdir()
+            (root / "Docs" / "a.pdf").write_bytes(b"same" * 100)
+            (root / ".hidden" / "b.pdf").write_bytes(b"same" * 100)
+            kept = [e for e in scan.walk(root) if not scan.is_ignored(e.rel, scan.DEFAULT_SKIP_DIRS)]
+            self.assertEqual(scan.duplicates(kept, min_size=1), [])
+
+
 class GalleryPathTests(unittest.TestCase):
     def test_traversal_is_refused(self):
         from library_tidy.gallery import Gallery
