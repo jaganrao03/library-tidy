@@ -161,6 +161,10 @@ def apply(plan: Plan, journal_dir: Path) -> Path:
     plan.check()
     journal_dir.mkdir(parents=True, exist_ok=True)
     journal = journal_dir / f"rename-{datetime.now():%Y%m%dT%H%M%S}.jsonl"
+    n = 1
+    while journal.exists():  # two runs inside one second must not overwrite each other
+        journal = journal_dir / f"rename-{datetime.now():%Y%m%dT%H%M%S}-{n}.jsonl"
+        n += 1
     with journal.open("w") as fh:
         fh.write(json.dumps({"type": "header", "root": str(plan.root),
                              "when": datetime.now().isoformat(timespec="seconds"),

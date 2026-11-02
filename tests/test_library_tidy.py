@@ -87,6 +87,15 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(a.exists())
         self.assertTrue(b.exists())
 
+    def test_two_apply_runs_never_share_a_journal(self):
+        """Same-second runs used to overwrite each other's undo trail."""
+        for i in range(2):
+            self._touch(f"p{i}.txt")
+            plan = rename.build_plan(self.root, lambda e, r, i=i: f"2024-01-0{i + 1} - Me - Note.txt",
+                                     select=lambda e: e.path.suffix == ".txt")
+            rename.apply(plan, self.root / "_j")
+        self.assertEqual(len(list((self.root / "_j").glob("*.jsonl"))), 2)
+
     def test_audit_flags_off_convention(self):
         self._touch("2024-01-01 - Me - Note - Ok.txt")
         self._touch("IMG_9999.jpg")
