@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "library-tidy"
+version = "0.1.0"
+description = "Turn a drive of accumulated files into a dated, navigable library (DATE - PARTY - TYPE - TOPIC)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "jaganrao03" }]
+keywords = ["files", "rename", "organize", "library", "dedupe", "exif", "webdav"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: System :: Filesystems",
+]
+dependencies = []
+
+[project.optional-dependencies]
+images = ["pillow>=9"]
+dev = ["ruff"]
+
+[project.scripts]
+library-tidy = "library_tidy.cli:main"
+
+[tool.setuptools]
+packages = ["library_tidy"]
